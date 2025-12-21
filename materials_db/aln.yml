@@ -1,0 +1,121 @@
+name: AlN
+aliases: [AluminumNitride, AlN]
+
+datasets:
+  singlecrystal_sotnikov2010:
+    kind: bulk
+    temp_K: null
+    axes: "crystal axes (6mm), c-axis = z"
+    voigt_order: [xx, yy, zz, yz, xz, xy]
+    shear: tensorial
+
+    units:
+      C6: GPa
+      e36: C/m^2
+      eps: eps_r
+      rho: kg/m^3
+
+    rho: 3260.0
+
+    # Sotnikov et al. 2010 Table I ("Our results")  [oai_citation:1‡Sotnikov et al. 2010 - Elastic and piezoelectric properties of AlN and LiAlO2 single crystals.pdf](sediment://file_000000005c3071faae9926c515aae9a5)
+    C6:
+      - [402.5, 135.6, 101.0, 0.0, 0.0, 0.0]
+      - [135.6, 402.5, 101.0, 0.0, 0.0, 0.0]
+      - [101.0, 101.0, 387.6, 0.0, 0.0, 0.0]
+      - [0.0, 0.0, 0.0, 122.9, 0.0, 0.0]
+      - [0.0, 0.0, 0.0, 0.0, 122.9, 0.0]
+      - [0.0, 0.0, 0.0, 0.0, 0.0, 133.45] # C66=(C11-C12)/2  [oai_citation:2‡Sotnikov et al. 2010 - Elastic and piezoelectric properties of AlN and LiAlO2 single crystals.pdf](sediment://file_000000005c3071faae9926c515aae9a5)
+
+    # 6mm piezo stress constants: rows = (x,y,z), cols=(xx,yy,zz,yz,xz,xy)
+    e36:
+      - [0.0, 0.0, 0.0, 0.0, -0.32, 0.0] # e15
+      - [0.0, 0.0, 0.0, -0.32, 0.0, 0.0] # e15
+      - [-0.60, -0.60, 1.34, 0.0, 0.0, 0.0] # e31,e33
+
+    # relative permittivity eps_r = eps/eps0 (Table I)  [oai_citation:3‡Sotnikov et al. 2010 - Elastic and piezoelectric properties of AlN and LiAlO2 single crystals.pdf](sediment://file_000000005c3071faae9926c515aae9a5)
+    eps:
+      - [9.0, 0.0, 0.0]
+      - [0.0, 9.0, 0.0]
+      - [0.0, 0.0, 9.5]
+
+    # --- meta only ---
+    independent_constants:
+      C_GPa:
+        {
+          C11: 402.5,
+          C12: 135.6,
+          C13: 101.0,
+          C33: 387.6,
+          C44: 122.9,
+          C66: 133.45,
+        }
+      e_Cpm2: { e15: -0.32, e31: -0.60, e33: 1.34 }
+      eps_over_eps0: { eps11: 9.0, eps33: 9.5 }
+    symmetry_note: |
+      Symmetry: 6mm (hexagonal, wurtzite). Voigt order: (xx, yy, zz, yz, xz, xy), tensorial shear.
+      Stiffness form (6mm):
+        [C11 C12 C13 0   0   0]
+        [C12 C11 C13 0   0   0]
+        [C13 C13 C33 0   0   0]
+        [0   0   0   C44 0   0]
+        [0   0   0   0   C44 0]
+        [0   0   0   0   0   C66]
+      Often C66=(C11-C12)/2.
+      Piezo e (stress constants) standard 6mm form:
+        row x: [0 0 0 0 e15 0]
+        row y: [0 0 0 e15 0 0]
+        row z: [e31 e31 e33 0 0 0]
+    source:
+      cite: "A. V. Sotnikov et al., IEEE Trans. UFFC 57(4), 2010, Table I (Our results)."
+
+  thinfilm_tsubouchi1981_via_sotnikov2010:
+    kind: thin_film
+    temp_K: null
+    axes: "effective constants (6mm assumption), c-axis = z"
+    voigt_order: [xx, yy, zz, yz, xz, xy]
+    shear: tensorial
+
+    units:
+      C6: GPa
+      e36: C/m^2
+      eps: eps_r
+      rho: kg/m^3
+
+    rho: 3260.0
+
+    # Sotnikov et al. 2010 Table I ("Thin film [1]")  [oai_citation:4‡Sotnikov et al. 2010 - Elastic and piezoelectric properties of AlN and LiAlO2 single crystals.pdf](sediment://file_000000005c3071faae9926c515aae9a5)
+    C6:
+      - [345.0, 125.0, 120.0, 0.0, 0.0, 0.0]
+      - [125.0, 345.0, 120.0, 0.0, 0.0, 0.0]
+      - [120.0, 120.0, 395.0, 0.0, 0.0, 0.0]
+      - [0.0, 0.0, 0.0, 118.0, 0.0, 0.0]
+      - [0.0, 0.0, 0.0, 0.0, 118.0, 0.0]
+      - [0.0, 0.0, 0.0, 0.0, 0.0, 110.0] # C66
+
+    e36:
+      - [0.0, 0.0, 0.0, 0.0, -0.48, 0.0]
+      - [0.0, 0.0, 0.0, -0.48, 0.0, 0.0]
+      - [-0.58, -0.58, 1.55, 0.0, 0.0, 0.0]
+
+    eps:
+      - [8.0, 0.0, 0.0]
+      - [0.0, 8.0, 0.0]
+      - [0.0, 0.0, 9.5]
+
+    independent_constants:
+      C_GPa:
+        {
+          C11: 345.0,
+          C12: 125.0,
+          C13: 120.0,
+          C33: 395.0,
+          C44: 118.0,
+          C66: 110.0,
+        }
+      e_Cpm2: { e15: -0.48, e31: -0.58, e33: 1.55 }
+      eps_over_eps0: { eps11: 8.0, eps33: 9.5 }
+    symmetry_note: |
+      Thin-film effective constants (quoted as "Thin film [1]" in Sotnikov 2010 Table I).
+      Same 6mm matrix form; treat as an effective bulk-like set for modeling.
+    source:
+      cite: "K. Tsubouchi et al., IEEE IUS 1981; values quoted in A. V. Sotnikov et al., IEEE TUFFC 57(4), 2010, Table I."

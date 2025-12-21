@@ -1,0 +1,72 @@
+datasets:
+  bulk_ogi2002_present:
+    kind: bulk
+    temp_K: 300
+    axes: "crystal (IEEE) axes"
+    voigt_order: [xx, yy, zz, yz, xz, xy]
+    shear: tensorial
+
+    units:
+      C6: GPa
+      e36: C/m^2
+      eps: F/m
+      rho: kg/m^3
+
+    rho: 4640.0
+
+    # --- voigt notation ---
+    C6:
+      - [199.5, 55.27, 67.67, 8.70, 0.0, 0.0]
+      - [55.27, 199.5, 67.67, -8.70, 0.0, 0.0]
+      - [67.67, 67.67, 235.2, 0.0, 0.0, 0.0]
+      - [8.70, -8.70, 0.0, 59.48, 0.0, 0.0]
+      - [0.0, 0.0, 0.0, 0.0, 59.48, 8.70]
+      - [0.0, 0.0, 0.0, 0.0, 8.70, 72.115]
+
+    e36:
+      - [0.0, 0.0, 0.0, 0.0, 3.65, -2.39]
+      - [-2.39, 2.39, 0.0, 3.65, 0.0, 0.0]
+      - [0.31, 0.31, 1.72, 0.0, 0.0, 0.0]
+
+    eps:
+      - [398.9e-12, 0.0, 0.0]
+      - [0.0, 398.9e-12, 0.0]
+      - [0.0, 0.0, 232.0e-12]
+
+    # --- meta data ---
+    independent_constants:
+      C_GPa:
+        {
+          C11: 199.5,
+          C12: 55.27,
+          C13: 67.67,
+          C14: 8.70,
+          C33: 235.2,
+          C44: 59.48,
+          C66: 72.115,
+        }
+      e_Cpm2: { e15: 3.65, e22: 2.39, e31: 0.31, e33: 1.72 }
+      kappa_Fpm: { k11: 398.9e-12, k33: 232.0e-12 }
+
+    symmetry_note: |
+      Point group: 3m (trigonal), crystal (IEEE) axes.
+      Voigt order: (xx, yy, zz, yz, xz, xy), tensorial shear (no factor 2).
+
+      Stiffness c^E has the standard 3m form:
+        [C11 C12 C13  C14   0   0]
+        [C12 C11 C13 -C14   0   0]
+        [C13 C13 C33   0    0   0]
+        [C14 -C14 0   C44   0   0]
+        [0   0   0    0   C44 C14]
+        [0   0   0    0   C14 C66]
+      with C66=(C11-C12)/2.
+
+      Piezoelectric e (stress constants) has (3m) form:
+        row x: [0 0 0 0 e15 -e22]
+        row y: [-e22 e22 0 e15 0 0]
+        row z: [e31 e31 e33 0 0 0]
+
+      Dielectric (kappa) is taken diagonal here (k11,k33) in the same axes.
+
+    source:
+      cite: "H. Ogi et al., J. Appl. Phys. 92, 2451 (2002), Table III (Present)"
