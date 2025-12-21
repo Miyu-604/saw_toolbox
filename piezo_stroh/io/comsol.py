@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from ..material import PiezoMaterial
+from ..material import VoigtMaterial
 
 
 def _flatten_col_major(A: np.ndarray) -> np.ndarray:
@@ -53,7 +53,7 @@ def _block(
 
 
 def to_comsol_text(
-    mat: PiezoMaterial,
+    mat: VoigtMaterial,
     *,
     eps_as_relative: bool = True,
     eps0: float = 8.854187817e-12,

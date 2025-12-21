@@ -7,7 +7,7 @@ try:
 except Exception as e:
     raise ImportError("piezo_stroh.stroh.piezo_saw requires scipy (scipy.linalg, scipy.optimize).") from e
 
-from ..material import PiezoMaterial
+from ..material import TensorMaterial
 
 
 class PiezoSAWSolver:
@@ -21,7 +21,7 @@ class PiezoSAWSolver:
         Decay as x3 -> +inf requires Im(beta) > 0.
     """
 
-    def __init__(self, mat: PiezoMaterial, *, epsilon0: float = 8.854187817e-12):
+    def __init__(self, mat: TensorMaterial, *, epsilon0: float = 8.854187817e-12):
         self.mat = mat
         self.rho = float(mat.rho)
         self.C = mat.C4   # true-strain stiffness tensor

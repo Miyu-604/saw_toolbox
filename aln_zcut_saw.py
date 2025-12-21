@@ -2,7 +2,7 @@ from __future__ import annotations
 import numpy as np
 
 from piezo_stroh.io import MaterialDB
-from piezo_stroh.material import PiezoMaterial
+from piezo_stroh.material import VoigtMaterial
 from piezo_stroh.stroh.piezo_saw import PiezoSAWSolver
 
 epsilon0 = 8.854187817e-12  # F/m
@@ -11,11 +11,11 @@ epsilon0 = 8.854187817e-12  # F/m
 def main():
     # --- Load single-crystal AlN from YAML DB ---
     db = MaterialDB()  # finds ./materials_db or env PIEZO_MATERIAL_DB
-    aln: PiezoMaterial = db.get("aln", "singlecrystal_sotnikov2010")
+    aln_voigt: VoigtMaterial = db.get("aln", "singlecrystal_sotnikov2010")
 
     # --- Orientation ---
     # For c-plane AlN with x-propagation & z-depth, identity is fine.
-    aln_oriented = aln
+    aln_oriented = aln_voigt.to_tensor()
 
     # --- Stroh solver ---
     solver = PiezoSAWSolver(aln_oriented)

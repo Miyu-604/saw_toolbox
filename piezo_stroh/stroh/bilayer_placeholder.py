@@ -1,11 +1,11 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from ..material import PiezoMaterial
+from ..material import TensorMaterial
 
 @dataclass(frozen=True)
 class BilayerConfig:
-    top: PiezoMaterial
-    bottom: PiezoMaterial
+    top: TensorMaterial
+    bottom: TensorMaterial
     thickness_top_m: float  # placeholder
 
 class BilayerStrohSolver:

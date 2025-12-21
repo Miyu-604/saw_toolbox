@@ -5,6 +5,7 @@ import numpy as np
 from piezo_stroh.io import MaterialDB
 from piezo_stroh.rotation import R_yxcut_theta_xprop
 from piezo_stroh.io.comsol import to_comsol_text
+from piezo_stroh.material import VoigtMaterial
 
 
 # --- DB keys (edit these to match your YAML) ---
@@ -14,17 +15,20 @@ from piezo_stroh.io.comsol import to_comsol_text
 MATERIAL_KEY = "linbo3"
 DATASET_KEY = "bulk_ogi2002_present"  # set to None to use YAML default_dataset if your DB supports it
 
-def _strain_to_E6_engineering(eps: np.ndarray) -> np.ndarray:
+def _strain_to_E6(eps: np.ndarray, *, shear: str) -> np.ndarray:
     """
-    eps (3x3 symmetric) -> E6 = [exx, eyy, ezz, gamma_yz, gamma_xz, gamma_xy]
-    with gamma = 2*epsilon for shear.
+    eps (3x3 symmetric) -> E6 with shear convention.
+    - engineering: gamma = 2*epsilon
+    - tensorial:   gamma = 1*epsilon
     """
+    shear_key = shear.strip().lower()
+    scale = 2.0 if shear_key == "engineering" else 1.0
     exx = eps[0, 0]
     eyy = eps[1, 1]
     ezz = eps[2, 2]
-    gyz = 2.0 * eps[1, 2]
-    gxz = 2.0 * eps[0, 2]
-    gxy = 2.0 * eps[0, 1]
+    gyz = scale * eps[1, 2]
+    gxz = scale * eps[0, 2]
+    gxy = scale * eps[0, 1]
     return np.array([exx, eyy, ezz, gyz, gxz, gxy], dtype=float)
 
 
@@ -43,18 +47,19 @@ def _stress6_to_tensor(s6: np.ndarray) -> np.ndarray:
     return sigma
 
 
-def energy_consistency_test(material, R=None, *, ntests=50, seed=0, strain_scale=1e-5):
+def energy_consistency_test(material: VoigtMaterial, R=None, *, ntests=50, seed=0, strain_scale=1e-5):
     """
     Test 1: W_voigt == W_tensor for random symmetric strains.
     Test 2: rotational invariance W(C,eps) == W(C',eps') when R is provided.
 
-    material: PiezoMaterial (expects .C6 and .C4 already consistent with your convention)
+    material: VoigtMaterial (uses .C6 and converts to tensor with its shear convention)
     R: optional rotation matrix (3x3)
     """
     rng = np.random.default_rng(seed)
 
     C6 = material.C6
-    C4 = material.C4
+    C4 = material.to_tensor().C4
+    shear = material.shear
 
     # Quick sanity: C6 symmetry
     sym_err = np.max(np.abs(C6 - C6.T))
@@ -74,7 +79,7 @@ def energy_consistency_test(material, R=None, *, ntests=50, seed=0, strain_scale
         eps = 0.5 * (A + A.T) * strain_scale  # small strain
 
         # ---- Voigt energy ----
-        E6 = _strain_to_E6_engineering(eps)  # uses gamma=2*eps_shear
+        E6 = _strain_to_E6(eps, shear=shear)
         sigma6 = C6 @ E6
         W_voigt = 0.5 * (E6 @ sigma6)  # since eps:sigma = E6^T*sigma6 under this convention
 
@@ -117,15 +122,18 @@ def main():
     else:
         ln = db.get(MATERIAL_KEY, DATASET_KEY)
 
+    ln_tensor = ln.to_tensor()
+
     # Quick sanity print
     print(f"[Loaded] {ln.name} (rho={ln.rho:.6g} kg/m^3)")
 
     # rotate to 128YX (x propagation)
     R = R_yxcut_theta_xprop(127.86)
-    ln128 = ln.rotated(R, name_suffix="128YX_xprop")
+    ln128 = ln_tensor.rotated(R, name_suffix="128YX_xprop")
 
     # export to COMSOL-like text
-    print(to_comsol_text(ln128, eps_as_relative=True))
+    ln128_voigt = ln128.to_voigt(shear=ln.shear)
+    print(to_comsol_text(ln128_voigt, eps_as_relative=True))
 
     # --- Energy consistency tests (VERY IMPORTANT) ---
     print("\n=== Energy consistency test: raw material (no rotation) ===")
@@ -135,7 +143,7 @@ def main():
     energy_consistency_test(ln, R=R, ntests=50, seed=2)
 
     print("\n=== Energy consistency test: rotated material itself (should still be consistent) ===")
-    energy_consistency_test(ln128, R=None, ntests=50, seed=3)
+    energy_consistency_test(ln128.to_voigt(shear=ln.shear), R=None, ntests=50, seed=3)
 
 if __name__ == "__main__":
     main()

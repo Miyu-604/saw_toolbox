@@ -7,7 +7,7 @@ from typing import Any, Dict, Optional
 
 import numpy as np
 
-from ..material import PiezoMaterial
+from ..material import VoigtMaterial
 
 EPS0 = 8.854187817e-12  # F/m
 
@@ -102,7 +102,7 @@ class MaterialDB:
     """
     YAML material database (Voigt matrices are the source of truth).
 
-    - get(): returns PiezoMaterial using ONLY rho, C6, e36, eps
+    - get(): returns VoigtMaterial using ONLY rho, C6, e36, eps
       (symmetry_note / independent_constants / source は計算に使わない)
     - get_meta(): returns metadata dict for notes/citation
     """
@@ -170,7 +170,7 @@ class MaterialDB:
         ]
         return {k: d.get(k) for k in keys if k in d}
 
-    def get(self, material_file: str, dataset: str) -> PiezoMaterial:
+    def get(self, material_file: str, dataset: str) -> VoigtMaterial:
         data = self._load(material_file)
         name = data.get("name", material_file)
 
@@ -199,4 +199,4 @@ class MaterialDB:
         shear = d.get("shear", "tensorial")
 
         mat_name = f"{name}:{dataset}"
-        return PiezoMaterial(name=mat_name, rho=rho, C6=C6, e36=e36, eps=eps, shear=shear)
+        return VoigtMaterial(name=mat_name, rho=rho, C6=C6, e36=e36, eps=eps, shear=shear)

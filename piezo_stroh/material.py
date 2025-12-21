@@ -6,10 +6,27 @@ from .voigt import voigtC_to_tensor4, voigt_e_to_tensor3, tensor4_to_voigtC, ten
 from .rotation import rotate_rank2, rotate_rank3, rotate_rank4, assert_rotation_matrix
 
 
+def _normalize_shear(shear: str | None) -> str:
+    if shear is None:
+        return "tensorial"
+    key = str(shear).strip().lower().replace("-", "").replace("_", "")
+    if key in ("tensorial", "tensor", "true", "epsilon", "strain"):
+        return "tensorial"
+    if key in ("engineering", "engineer", "eng", "gamma"):
+        return "engineering"
+    raise ValueError(f"Unknown shear convention: {shear}")
+
+
+def _strain_scale_from_shear(shear: str) -> np.ndarray:
+    if shear == "engineering":
+        return np.array([1, 1, 1, 2, 2, 2], dtype=float)
+    return np.array([1, 1, 1, 1, 1, 1], dtype=float)
+
+
 @dataclass(frozen=True)
-class PiezoMaterial:
+class VoigtMaterial:
     """
-    Minimal piezoelectric material container.
+    Voigt-based material container (data layer).
 
     Conventions:
       - C6: stiffness in Voigt (shear convention set by `shear`), units: Pa
@@ -44,40 +61,51 @@ class PiezoMaterial:
         object.__setattr__(self, "eps", eps)
         object.__setattr__(self, "shear", shear)
 
-
-def _normalize_shear(shear: str | None) -> str:
-    if shear is None:
-        return "tensorial"
-    key = str(shear).strip().lower().replace("-", "").replace("_", "")
-    if key in ("tensorial", "tensor", "true", "epsilon", "strain"):
-        return "tensorial"
-    if key in ("engineering", "engineer", "eng", "gamma"):
-        return "engineering"
-    raise ValueError(f"Unknown shear convention: {shear}")
+    def to_tensor(self) -> "TensorMaterial":
+        scale = _strain_scale_from_shear(self.shear)
+        C4 = voigtC_to_tensor4(self.C6, strain_scale=scale)
+        e3 = voigt_e_to_tensor3(self.e36, strain_scale=scale)
+        return TensorMaterial(self.name, self.rho, C4, e3, self.eps)
 
 
-def _strain_scale_from_shear(shear: str) -> np.ndarray:
-    if shear == "engineering":
-        return np.array([1, 1, 1, 2, 2, 2], dtype=float)
-    return np.array([1, 1, 1, 1, 1, 1], dtype=float)
+@dataclass(frozen=True)
+class TensorMaterial:
+    """
+    Tensor-based material container (physics layer).
 
-    # --- tensor views (true strain tensors) ---
-    @property
-    def C4(self) -> np.ndarray:
-        return voigtC_to_tensor4(self.C6, strain_scale=_strain_scale_from_shear(self.shear))
+    Conventions:
+      - C4: stiffness tensor for true strain ε
+      - e3: piezo tensor e_kij with ij symmetric
+      - eps: permittivity tensor (rank-2), units: F/m
+      - rho: density, units: kg/m^3
+    """
+    name: str
+    rho: float
+    C4: np.ndarray          # (3,3,3,3)
+    e3: np.ndarray          # (3,3,3)
+    eps: np.ndarray         # (3,3)
 
-    @property
-    def e3(self) -> np.ndarray:
-        return voigt_e_to_tensor3(self.e36, strain_scale=_strain_scale_from_shear(self.shear))
+    def __post_init__(self):
+        C4 = np.asarray(self.C4, float)
+        e3 = np.asarray(self.e3, float)
+        eps = np.asarray(self.eps, float)
+        if C4.shape != (3, 3, 3, 3):
+            raise ValueError("C4 must be (3,3,3,3).")
+        if e3.shape != (3, 3, 3):
+            raise ValueError("e3 must be (3,3,3).")
+        if eps.shape != (3, 3):
+            raise ValueError("eps must be (3,3).")
 
-    # --- rotation ---
-    def rotated(self, R: np.ndarray, *, name_suffix: str | None = None) -> "PiezoMaterial":
+        object.__setattr__(self, "C4", C4)
+        object.__setattr__(self, "e3", e3)
+        object.__setattr__(self, "eps", eps)
+
+    def rotated(self, R: np.ndarray, *, name_suffix: str | None = None) -> "TensorMaterial":
         """
         Rotate material tensors:
           C'ijkl = R_ip R_jq R_kr R_ls C_pqrs
           e'kij  = R_kp R_iq R_jr e_pqr
           eps'   = R eps R^T
-        Return rotated material in the same Voigt convention (`shear`).
         """
         assert_rotation_matrix(R)
 
@@ -85,9 +113,12 @@ def _strain_scale_from_shear(shear: str) -> np.ndarray:
         e3r = rotate_rank3(self.e3, R)
         epsr = rotate_rank2(self.eps, R)
 
-        scale = _strain_scale_from_shear(self.shear)
-        C6r = tensor4_to_voigtC(C4r, strain_scale=scale)
-        e36r = tensor3_to_voigt_e(e3r, strain_scale=scale)
-
         new_name = self.name if name_suffix is None else f"{self.name}_{name_suffix}"
-        return PiezoMaterial(new_name, self.rho, C6r, e36r, epsr, shear=self.shear)
+        return TensorMaterial(new_name, self.rho, C4r, e3r, epsr)
+
+    def to_voigt(self, *, shear: str = "tensorial") -> VoigtMaterial:
+        shear = _normalize_shear(shear)
+        scale = _strain_scale_from_shear(shear)
+        C6 = tensor4_to_voigtC(self.C4, strain_scale=scale)
+        e36 = tensor3_to_voigt_e(self.e3, strain_scale=scale)
+        return VoigtMaterial(self.name, self.rho, C6, e36, self.eps, shear=shear)
