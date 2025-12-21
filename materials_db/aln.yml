@@ -7,7 +7,7 @@ datasets:
     temp_K: null
     axes: "crystal axes (6mm), c-axis = z"
     voigt_order: [xx, yy, zz, yz, xz, xy]
-    shear: tensorial
+    shear: engineering
 
     units:
       C6: GPa
@@ -73,7 +73,7 @@ datasets:
     temp_K: null
     axes: "effective constants (6mm assumption), c-axis = z"
     voigt_order: [xx, yy, zz, yz, xz, xy]
-    shear: tensorial
+    shear: engineering
 
     units:
       C6: GPa

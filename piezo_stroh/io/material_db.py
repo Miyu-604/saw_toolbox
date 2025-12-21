@@ -196,5 +196,7 @@ class MaterialDB:
 
         C6, eps = _convert_units(C6, eps, units)
 
+        shear = d.get("shear", "tensorial")
+
         mat_name = f"{name}:{dataset}"
-        return PiezoMaterial(name=mat_name, rho=rho, C6=C6, e36=e36, eps=eps)
+        return PiezoMaterial(name=mat_name, rho=rho, C6=C6, e36=e36, eps=eps, shear=shear)

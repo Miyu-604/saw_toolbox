@@ -15,7 +15,16 @@ VOIGT_PAIRS = ((0, 0), (1, 1), (2, 2), (1, 2), (0, 2), (0, 1))
 VOIGT_STRAIN_SCALE = np.array([1, 1, 1, 1, 1, 1], dtype=float)
 
 
-def voigtC_to_tensor4(C6: np.ndarray) -> np.ndarray:
+def _get_strain_scale(strain_scale: np.ndarray | None) -> np.ndarray:
+    if strain_scale is None:
+        return VOIGT_STRAIN_SCALE
+    s = np.asarray(strain_scale, dtype=float)
+    if s.shape != (6,):
+        raise ValueError("strain_scale must be shape (6,).")
+    return s
+
+
+def voigtC_to_tensor4(C6: np.ndarray, *, strain_scale: np.ndarray | None = None) -> np.ndarray:
     """
     6x6 stiffness (Voigt) -> 3x3x3x3 stiffness tensor for true strain:
         sigma_ij = C_ijkl * epsilon_kl
@@ -31,7 +40,7 @@ def voigtC_to_tensor4(C6: np.ndarray) -> np.ndarray:
     if C6.shape != (6, 6):
         raise ValueError("C6 must be (6,6).")
 
-    s = VOIGT_STRAIN_SCALE
+    s = _get_strain_scale(strain_scale)
     C4 = np.zeros((3, 3, 3, 3), dtype=float)
 
     for I, (i, j) in enumerate(VOIGT_PAIRS):
@@ -47,13 +56,13 @@ def voigtC_to_tensor4(C6: np.ndarray) -> np.ndarray:
     return C4
 
 
-def tensor4_to_voigtC(C4: np.ndarray) -> np.ndarray:
+def tensor4_to_voigtC(C4: np.ndarray, *, strain_scale: np.ndarray | None = None) -> np.ndarray:
     """Inverse of voigtC_to_tensor4 under same convention: C6[I,J] = C4 / scale[J]."""
     C4 = np.asarray(C4, dtype=float)
     if C4.shape != (3, 3, 3, 3):
         raise ValueError("C4 must be (3,3,3,3).")
 
-    s = VOIGT_STRAIN_SCALE
+    s = _get_strain_scale(strain_scale)
     C6 = np.zeros((6, 6), dtype=float)
 
     for I, (i, j) in enumerate(VOIGT_PAIRS):
@@ -63,7 +72,7 @@ def tensor4_to_voigtC(C4: np.ndarray) -> np.ndarray:
     return 0.5 * (C6 + C6.T)
 
 
-def voigt_e_to_tensor3(e36: np.ndarray) -> np.ndarray:
+def voigt_e_to_tensor3(e36: np.ndarray, *, strain_scale: np.ndarray | None = None) -> np.ndarray:
     """
     3x6 piezo tensor e (Voigt, engineering shear on 6-index) -> 3x3x3 tensor e_kij.
 
@@ -77,7 +86,7 @@ def voigt_e_to_tensor3(e36: np.ndarray) -> np.ndarray:
     if e36.shape != (3, 6):
         raise ValueError("e36 must be (3,6).")
 
-    s = VOIGT_STRAIN_SCALE
+    s = _get_strain_scale(strain_scale)
     e3 = np.zeros((3, 3, 3), dtype=float)  # [k,i,j]
 
     for k in range(3):
@@ -89,13 +98,13 @@ def voigt_e_to_tensor3(e36: np.ndarray) -> np.ndarray:
     return e3
 
 
-def tensor3_to_voigt_e(e3: np.ndarray) -> np.ndarray:
+def tensor3_to_voigt_e(e3: np.ndarray, *, strain_scale: np.ndarray | None = None) -> np.ndarray:
     """Inverse of voigt_e_to_tensor3: e36[k,J] = e3 / scale[J]."""
     e3 = np.asarray(e3, dtype=float)
     if e3.shape != (3, 3, 3):
         raise ValueError("e3 must be (3,3,3).")
 
-    s = VOIGT_STRAIN_SCALE
+    s = _get_strain_scale(strain_scale)
     e36 = np.zeros((3, 6), dtype=float)
 
     for k in range(3):
