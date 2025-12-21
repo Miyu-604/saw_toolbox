@@ -17,7 +17,7 @@ def main():
     R_cut = R_yxcut_theta_xprop(127.86)
 
     # --- Sweep in-plane propagation direction (about +z) ---
-    angles_deg = np.arange(0.0, 180.0 + 1e-9, 30.0)
+    angles_deg = np.arange(0.0, 180.0 + 1e-9, 1.0)
     v_short = []
     v_open = []
     k2 = []
@@ -28,17 +28,26 @@ def main():
         mat = ln.rotated(R, name_suffix=f"128YX_xprop_Rz{ang:.0f}")
 
         solver = PiezoSAWSolver(mat)
-        v_s, err_s = solver.find_velocity(electric_bc="short", vmin=3000, vmax=5000)
-        v_o, err_o = solver.find_velocity(electric_bc="open", vmin=3000, vmax=5000)
+
+        if len(v_short) == 0:
+            vmin_s, vmax_s = 3760.0, 3960.0
+            vmin_o, vmax_o = 3870.0, 4070.0
+        else:
+            vmin_s, vmax_s = v_short[-1] - 100.0, v_short[-1] + 100.0
+            vmin_o, vmax_o = v_open[-1] - 100.0, v_open[-1] + 100.0
+
+        v_s, err_s = solver.find_velocity(electric_bc="short", vmin=vmin_s, vmax=vmax_s)
+        v_o, err_o = solver.find_velocity(electric_bc="open", vmin=vmin_o, vmax=vmax_o)
 
         v_short.append(v_s)
         v_open.append(v_o)
         k2.append(2 * (v_o - v_s) / v_o)
 
-        print(
-            f"[Rz={ang:5.1f} deg] short={v_s:8.2f} (err={err_s:.2e}) "
-            f"open={v_o:8.2f} (err={err_o:.2e}) k2={k2[-1]*100:7.3f} %"
-        )
+        if ang % 10 == 0:
+            print(
+                f"[Rz={ang:5.1f} deg] short={v_s:8.2f} (err={err_s:.2e}) "
+                f"open={v_o:8.2f} (err={err_o:.2e}) k2={k2[-1]*100:7.3f} %"
+            )
 
     angles_deg = np.asarray(angles_deg)
     v_short = np.asarray(v_short)
