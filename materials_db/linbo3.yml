@@ -4,7 +4,7 @@ datasets:
     temp_K: 300
     axes: "crystal (IEEE) axes"
     voigt_order: [xx, yy, zz, yz, xz, xy]
-    shear: engineering
+    shear: tensorial
 
     units:
       C6: GPa
