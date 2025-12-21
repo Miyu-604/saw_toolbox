@@ -1,5 +1,5 @@
 datasets:
-  bulk_ogi2002_present:
+  bulk_ogi2002:
     kind: bulk
     temp_K: 300
     axes: "crystal (IEEE) axes"
@@ -70,3 +70,76 @@ datasets:
 
     source:
       cite: "H. Ogi et al., J. Appl. Phys. 92, 2451 (2002), Table III (Present)"
+
+datasets:
+  bulk_warner1967:
+    kind: bulk
+    temp_K: 300
+    axes: "crystal (IEEE) axes"
+    voigt_order: [xx, yy, zz, yz, xz, xy]
+    shear: tensorial
+
+    units:
+      C6: GPa
+      e36: C/m^2
+      eps: F/m
+      rho: kg/m^3
+
+    rho: 4640.0
+
+    # --- voigt notation ---
+    C6:
+      - [203.0, 53.0, 75.0, 9.0, 0.0, 0.0]
+      - [53.0, 203.0, 75.0, -9.0, 0.0, 0.0]
+      - [75.0, 75.0, 245.0, 0.0, 0.0, 0.0]
+      - [9.0, -9.0, 0.0, 60.0, 0.0, 0.0]
+      - [0.0, 0.0, 0.0, 0.0, 60.0, 9.0]
+      - [0.0, 0.0, 0.0, 0.0, 9.0, 75.0]
+
+    e36:
+      - [0.0, 0.0, 0.0, 0.0, 3.7, -2.5]
+      - [-2.5, 2.5, 0.0, 3.7, 0.0, 0.0]
+      - [0.2, 0.2, 1.3, 0.0, 0.0, 0.0]
+
+    eps:
+      - [390.0e-12, 0.0, 0.0]
+      - [0.0, 390.0e-12, 0.0]
+      - [0.0, 0.0, 257.0e-12]
+
+    # --- meta data ---
+    independent_constants:
+      C_GPa:
+        {
+          C11: 203.0,
+          C12: 53.0,
+          C13: 75.0,
+          C14: 9.0,
+          C33: 245.0,
+          C44: 60.0,
+          C66: 75.0,
+        }
+      e_Cpm2: { e15: 3.7, e22: 2.5, e31: 0.2, e33: 1.3 }
+      kappa_Fpm: { k11: 390.0e-12, k33: 257.0e-12 }
+
+    symmetry_note: |
+      Point group: 3m (trigonal), crystal (IEEE) axes.
+      Voigt order: (xx, yy, zz, yz, xz, xy), tensorial shear (no factor 2).
+
+      Stiffness c^E has the standard 3m form:
+        [C11 C12 C13  C14   0   0]
+        [C12 C11 C13 -C14   0   0]
+        [C13 C13 C33   0    0   0]
+        [C14 -C14 0   C44   0   0]
+        [0   0   0    0   C44 C14]
+        [0   0   0    0   C14 C66]
+      with C66=(C11-C12)/2.
+
+      Piezoelectric e (stress constants) has (3m) form:
+        row x: [0 0 0 0 e15 -e22]
+        row y: [-e22 e22 0 e15 0 0]
+        row z: [e31 e31 e33 0 0 0]
+
+      Dielectric (kappa) is taken diagonal here (k11,k33) in the same axes.
+
+    source:
+      cite: "H. Ogi et al., J. Appl. Phys. 92, 2451 (2002), Table III (Warner and co-workers, Ref. 28)"
