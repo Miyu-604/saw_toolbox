@@ -39,7 +39,7 @@ class VoigtMaterial:
     C6: np.ndarray          # (6,6) Pa
     e36: np.ndarray         # (3,6) C/m^2
     eps: np.ndarray         # (3,3) F/m
-    shear: str = "tensorial"
+    shear: str = "engineering"
 
     def __post_init__(self):
         C6 = np.asarray(self.C6, float)

@@ -85,6 +85,8 @@ def to_comsol_text(
       - You can change units by scaling values yourself, e.g. export GPa via
         `c_unit="GPa", c_scale=1e-9` (since mat.C6 is Pa).
     """
+    if mat.shear != "engineering":
+        mat = mat.to_tensor().to_voigt(shear="engineering")
 
     # --- C (6x6) ---
     C6 = np.asarray(mat.C6, float) * c_scale

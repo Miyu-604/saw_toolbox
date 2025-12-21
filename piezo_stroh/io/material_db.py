@@ -196,7 +196,7 @@ class MaterialDB:
 
         C6, eps = _convert_units(C6, eps, units)
 
-        shear = d.get("shear", "tensorial")
+        shear = d.get("shear", "engineering")
 
         mat_name = f"{name}:{dataset}"
         return VoigtMaterial(name=mat_name, rho=rho, C6=C6, e36=e36, eps=eps, shear=shear)
