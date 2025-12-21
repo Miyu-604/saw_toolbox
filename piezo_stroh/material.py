@@ -18,7 +18,7 @@ def _normalize_shear(shear: str | None) -> str:
 
 
 def _strain_scale_from_shear(shear: str) -> np.ndarray:
-    if shear == "engineering":
+    if shear == "tensorial":
         return np.array([1, 1, 1, 2, 2, 2], dtype=float)
     return np.array([1, 1, 1, 1, 1, 1], dtype=float)
 

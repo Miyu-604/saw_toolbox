@@ -4,7 +4,7 @@ datasets:
     temp_K: 300
     axes: "crystal (IEEE) axes"
     voigt_order: [xx, yy, zz, yz, xz, xy]
-    shear: tensorial
+    shear: engineering
 
     units:
       C6: GPa
@@ -71,7 +71,6 @@ datasets:
     source:
       cite: "H. Ogi et al., J. Appl. Phys. 92, 2451 (2002), Table III (Present)"
 
-datasets:
   bulk_warner1967:
     kind: bulk
     temp_K: 300

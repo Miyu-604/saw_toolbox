@@ -5,10 +5,10 @@ import numpy as np
 VOIGT_PAIRS = ((0, 0), (1, 1), (2, 2), (1, 2), (0, 2), (0, 1))
 
 # Strain-side scaling for Voigt shear convention.
-# This project uses the *tensorial* shear convention by default:
-#   E6 = [εxx, εyy, εzz, εyz, εxz, εxy]
-# hence no extra scaling is needed (all ones).
-# If your input matrices are written with *engineering* shear γ=2ε (common in some texts),
+# This project treats *engineering* shear as the default in YAML inputs:
+#   E6 = [εxx, εyy, εzz, γyz, γxz, γxy] with γ = 2ε
+# hence no extra scaling is needed (all ones) when using engineering inputs.
+# If your input matrices are written with *tensorial* shear εij (no factor 2),
 # you can adapt by setting:
 #   VOIGT_STRAIN_SCALE = [1, 1, 1, 2, 2, 2]
 # so that tensor forms (rank-3/4) are consistent with true strain ε.
