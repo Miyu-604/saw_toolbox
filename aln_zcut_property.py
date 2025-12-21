@@ -1,16 +1,13 @@
 from __future__ import annotations
 
-import numpy as np
-
 from piezo_stroh.io import MaterialDB
-from piezo_stroh.rotation import R_yxcut_theta_xprop
 from piezo_stroh.io.comsol import to_comsol_text
 
 MATERIAL_KEY = "aln"
 DATASET_KEY = "singlecrystal_sotnikov2010"
 
 def main():
-    # --- Load LiNbO3 (crystal axes) from YAML DB ---
+    # --- Load AlN (crystal axes) from YAML DB ---
     db = MaterialDB()
     if DATASET_KEY is None:
         aln = db.get(MATERIAL_KEY)  # uses YAML default_dataset if implemented

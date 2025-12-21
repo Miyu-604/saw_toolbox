@@ -9,7 +9,7 @@ from piezo_stroh.stroh.piezo_saw import PiezoSAWSolver
 def main():
     # --- Load LiNbO3 (crystal axes) from YAML DB ---
     db = MaterialDB()
-    ln_voigt = db.get("linbo3", "bulk_warner1967")
+    ln_voigt = db.get("linbo3", "bulk_ogi2002")
     ln = ln_voigt.to_tensor()
 
     # --- Rotate to 128YX (x propagation) ---
