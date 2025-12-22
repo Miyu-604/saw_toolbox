@@ -58,13 +58,13 @@ def main():
     # --- Plot results ---
     plt.rcParams["lines.markersize"] = 2
     fig, (ax1, ax2) = plt.subplots(figsize=(8, 7), nrows=2, sharex=True)
-    ax1.plot(angles_deg, v_short, "o-", label="Short")
-    ax1.plot(angles_deg, v_open, "s-", label="Open")
+    ax1.scatter(angles_deg, v_short, label="Short")
+    ax1.scatter(angles_deg, v_open, label="Open")
     ax1.set_ylabel("SAW velocity (m/s)")
     ax1.grid(True, linestyle=":", alpha=0.6)
     ax1.legend(loc="upper left")
 
-    ax2.plot(angles_deg, k2 * 100.0, "d-", color="tab:red", label="K^2")
+    ax2.scatter(angles_deg, k2 * 100.0, color="tab:red", label="K^2")
     ax2.set_xlabel("Rz angle (deg)")
     ax2.set_ylabel("K^2 (%)")
     ax2.set_ylim(0, 6)
