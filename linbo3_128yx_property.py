@@ -14,25 +14,25 @@ DATASET_KEY = "bulk_ogi2002"  # set to None to use YAML default_dataset if your 
 
 
 def main():
-    # --- Load LiNbO3 (crystal axes) from YAML DB ---
+    # --- Load crystal from YAML DB ---
     db = MaterialDB()
     if DATASET_KEY is None:
-        ln = db.get(MATERIAL_KEY)  # uses YAML default_dataset if implemented
+        mat = db.get(MATERIAL_KEY)  # uses YAML default_dataset if implemented
     else:
-        ln = db.get(MATERIAL_KEY, DATASET_KEY)
+        mat = db.get(MATERIAL_KEY, DATASET_KEY)
 
-    ln_tensor = ln.to_tensor()
+    mat_tensor = mat.to_tensor()
 
     # Quick sanity print
-    print(f"[Loaded] {ln.name} (rho={ln.rho:.6g} kg/m^3)")
+    print(f"[Loaded] {mat.name} (rho={mat.rho:.6g} kg/m^3)")
 
-    # rotate to 128YX (x propagation)
+    # rotate for orientation
     R = R_yxcut_theta_xprop(127.86)
-    ln128 = ln_tensor.rotated(R, name_suffix="128YX_xprop")
+    mat_orientation = mat_tensor.rotated(R, name_suffix="128YX_xprop")
 
     # export to COMSOL-like text
-    ln128_voigt = ln128.to_voigt(shear=ln.shear)
-    print(to_comsol_text(ln128_voigt, eps_as_relative=True))
+    mat128_voigt = mat_orientation.to_voigt(shear=mat.shear)
+    print(to_comsol_text(mat128_voigt, eps_as_relative=True))
 
 if __name__ == "__main__":
     main()

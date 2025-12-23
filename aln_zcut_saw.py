@@ -21,8 +21,8 @@ def main():
     solver = PiezoSAWSolver(aln_oriented)
 
     # AlN is fast; search around the expected ~7 km/s range
-    v_short, err_short = solver.find_velocity(electric_bc="short", vmin=6500, vmax=8000)
-    v_open, err_open = solver.find_velocity(electric_bc="open", vmin=6500, vmax=8000)
+    v_short, err_short = solver.find_velocity(electric_bc="short", vmin=6000, vmax=8000)
+    v_open, err_open = solver.find_velocity(electric_bc="open", vmin=6000, vmax=8000)
 
     print(f"[{aln_oriented.name}]")
     print(f"Metallized (Short) Velocity: {v_short:.2f} m/s (err={err_short:.2e})")
