@@ -1,0 +1,157 @@
+name: Sapphire
+aliases: [Al2O3, alpha-Al2O3, Corundum, Sapphire_zcut]
+
+datasets:
+  singlecrystal_gladden2004:
+    kind: bulk
+    temp_K: 300
+    axes: "crystal axes (trigonal 3m), c-axis = z (z-cut)"
+    voigt_order: [xx, yy, zz, yz, xz, xy]
+    shear: tensorial
+
+    units:
+      C6: GPa
+      e36: C/m^2
+      eps: eps_r
+      rho: kg/m^3
+
+    rho: 3980.0
+
+    # --- voigt notation (3m) ---
+    # Gladden et al. (RUS) values as compiled in Ugarak et al.
+    C6:
+      - [497.5, 162.7, 115.5, 22.5, 0.0, 0.0]
+      - [162.7, 497.5, 115.5, -22.5, 0.0, 0.0]
+      - [115.5, 115.5, 503.3, 0.0, 0.0, 0.0]
+      - [22.5, -22.5, 0.0, 147.4, 0.0, 0.0]
+      - [0.0, 0.0, 0.0, 0.0, 147.4, 22.5]
+      - [0.0, 0.0, 0.0, 0.0, 22.5, 167.4] # C66=(C11-C12)/2
+
+    # --- not piezoelectric: fill with zeros (stress constants) ---
+    e36:
+      - [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+      - [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+      - [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+    # --- relative permittivity eps_r (uniaxial) ---
+    # eps11=eps22=9.27 (⊥c), eps33=11.35 (∥c)
+    eps:
+      - [9.27, 0.0, 0.0]
+      - [0.0, 9.27, 0.0]
+      - [0.0, 0.0, 11.35]
+
+    # --- meta data ---
+    independent_constants:
+      C_GPa:
+        {
+          C11: 497.5,
+          C12: 162.7,
+          C13: 115.5,
+          C14: 22.5,
+          C33: 503.3,
+          C44: 147.4,
+          C66: 167.4,
+        }
+      e_Cpm2: { e15: 0.0, e22: 0.0, e31: 0.0, e33: 0.0 }
+      eps_over_eps0: { eps11: 9.27, eps33: 11.35 }
+
+    symmetry_note: |
+      Point group: 3m (trigonal), c-axis = z (z-cut).
+      Voigt order: (xx, yy, zz, yz, xz, xy), tensorial shear (no factor 2).
+
+      Stiffness c has the standard 3m form:
+        [C11 C12 C13  C14   0   0]
+        [C12 C11 C13 -C14   0   0]
+        [C13 C13 C33   0    0   0]
+        [C14 -C14 0   C44   0   0]
+        [0   0   0    0   C44 C14]
+        [0   0   0    0   C14 C66]
+      with C66=(C11-C12)/2.
+
+      Sapphire (Al2O3) is non-piezoelectric -> e = 0.
+      Dielectric is uniaxial: eps11=eps22 (⊥c), eps33 (∥c).
+
+    source:
+      cite: |
+        Elastic constants: H. Ugarak et al., "Reconciliation of ab initio theory and experimental elastic properties of α-Al2O3",
+        Table I (Gladden et al. RUS set; includes c14>0 and discusses sign issue).
+        Relative permittivity: A. P. Read et al., Phys. Rev. Applied 19, 034064 (2023), Appendix B (eps_r||=11.35, eps_r⊥=9.27).
+
+  bulk_ugarak2023_bls:
+    kind: bulk
+    temp_K: 300
+    axes: "crystal (hexagonal) axes: z || c ([0001])"
+    voigt_order: [xx, yy, zz, yz, xz, xy]
+    shear: engineering
+
+    units:
+      C6: GPa
+      e36: C/m^2
+      eps: F/m
+      rho: kg/m^3
+
+    rho: 3980.0
+
+    # --- voigt notation (trigonal -3m, sapphire / alpha-Al2O3) ---
+    # Note: c14 sign can depend on axis convention; here we use +|c14|.
+    C6:
+      - [511.90, 166.65, 123.14, 23.42, 0.0, 0.0]
+      - [166.65, 511.90, 123.14, -23.42, 0.0, 0.0]
+      - [123.14, 123.14, 522.54, 0.0, 0.0, 0.0]
+      - [23.42, -23.42, 0.0, 150.89, 0.0, 0.0]
+      - [0.0, 0.0, 0.0, 0.0, 150.89, 23.42]
+      - [0.0, 0.0, 0.0, 0.0, 23.42, 172.625] # C66=(C11-C12)/2
+
+    # Sapphire is centrosymmetric -> piezoelectricity = 0
+    e36:
+      - [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+      - [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+      - [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+    # Dielectric permittivity (absolute, F/m) using eps_r at RT, 1 MHz:
+    # eps11=eps22=9.23*eps0, eps33=11.75*eps0
+    eps:
+      - [8.172415355e-11, 0.0, 0.0]
+      - [0.0, 8.172415355e-11, 0.0]
+      - [0.0, 0.0, 1.040367068e-10]
+
+    # --- meta data ---
+    independent_constants:
+      C_GPa:
+        {
+          C11: 511.90,
+          C12: 166.65,
+          C13: 123.14,
+          C14: 23.42,
+          C33: 522.54,
+          C44: 150.89,
+          C66: 172.625,
+        }
+      e_Cpm2: { e15: 0.0, e22: 0.0, e31: 0.0, e33: 0.0 }
+      kappa_rel: { eps11: 9.23, eps33: 11.75 }
+      kappa_Fpm: { k11: 8.172415355e-11, k33: 1.040367068e-10 }
+
+    symmetry_note: |
+      Material: sapphire (alpha-Al2O3), trigonal (corundum), point group -3m (D3d).
+      Voigt order: (xx, yy, zz, yz, xz, xy), engineering shear.
+
+      Stiffness has the trigonal form:
+        [C11 C12 C13  C14   0   0]
+        [C12 C11 C13 -C14   0   0]
+        [C13 C13 C33   0    0   0]
+        [C14 -C14 0   C44   0   0]
+        [0   0   0    0   C44 C14]
+        [0   0   0    0   C14 C66]
+      with C66=(C11-C12)/2.
+
+      Sapphire is centrosymmetric -> piezoelectric e = 0.
+
+      Dielectric (RT, ~1 MHz) is uniaxial:
+        eps11=eps22, eps33 (values given as absolute permittivity in eps).
+
+      NOTE: In the BLS fit paper, the magnitude |c14| is determined; its sign depends on conventions.
+
+    source:
+      cite_elastic: "E. Ugarak et al., J. Appl. Phys. 134, 185103 (2023), Table I (BLS column)."
+      cite_dielectric: "L.-Y. Chen, HiTEC 2010 Proceedings (IMAPS), 'High Temperature Capacitors Based on [0001] and [11-20] Sapphire Dielectrics' (RT, 1 MHz)."
+      cite_density: "MIT 8.13 (JLExperiments) Sapphire note: density 3.98 g/cm^3 (used here as 3980 kg/m^3)."
