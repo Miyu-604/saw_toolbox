@@ -4,6 +4,7 @@ import numpy as np
 from piezo_stroh.io import MaterialDB
 from piezo_stroh.material import VoigtMaterial
 from piezo_stroh.stroh.piezo_saw import PiezoSAWSolver
+from piezo_stroh.rotation import Rz
 
 epsilon0 = 8.854187817e-12  # F/m
 
@@ -16,17 +17,19 @@ def main():
     # --- Orientation ---
     # For c-plane AlN with x-propagation & z-depth, identity is fine.
     aln_oriented = aln_voigt.to_tensor()
+    R = Rz(60.0)
+    aln_prop = aln_oriented.rotated(R, name_suffix="rotated 60deg about z")
 
     # --- Stroh solver ---
-    solver = PiezoSAWSolver(aln_oriented)
+    solver = PiezoSAWSolver(aln_prop)
 
     # AlN is fast; search around the expected ~7 km/s range
-    v_short, err_short = solver.find_velocity(electric_bc="short", vmin=6000, vmax=8000)
-    v_open, err_open = solver.find_velocity(electric_bc="open", vmin=6000, vmax=8000)
+    v_short, err_short = solver.find_velocity(electric_bc="short", vmin=5000, vmax=6000)
+    v_open, err_open = solver.find_velocity(electric_bc="open", vmin=5000, vmax=6000)
 
     print(f"[{aln_oriented.name}]")
-    print(f"Metallized (Short) Velocity: {v_short:.2f} m/s (err={err_short:.2e})")
     print(f"Free (Open) Velocity:        {v_open:.2f} m/s (err={err_open:.2e})")
+    print(f"Metallized (Short) Velocity: {v_short:.2f} m/s (err={err_short:.2e})")
     k2 = 2 * (v_open - v_short) / v_open
     print(f"Calculated K^2: {k2*100:.4f} %")
 
@@ -60,8 +63,9 @@ def main():
         plt.tight_layout()
         plt.show()
 
-    plot_profile(z, prof_open,  f"AlN open surface (v={v_open:.2f} m/s)")
     plot_profile(z, prof_short, f"AlN short surface (v={v_short:.2f} m/s)")
+    plot_profile(z, prof_open,  f"AlN open surface (v={v_open:.2f} m/s)")
+
 
 
 if __name__ == "__main__":

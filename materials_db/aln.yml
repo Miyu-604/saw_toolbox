@@ -7,7 +7,7 @@ datasets:
     temp_K: null
     axes: "crystal axes (6mm), c-axis = z"
     voigt_order: [xx, yy, zz, yz, xz, xy]
-    shear: tensorial
+    shear: engineering
 
     units:
       C6: GPa
@@ -68,7 +68,7 @@ datasets:
     source:
       cite: "A. V. Sotnikov et al., IEEE Trans. UFFC 57(4), 2010, Table I (Our results)."
 
-  thinfilm_tsubouchi1981_via_sotnikov2010:
+  thinfilm_tsubouchi1981:
     kind: thin_film
     temp_K: null
     axes: "effective constants (6mm assumption), c-axis = z"

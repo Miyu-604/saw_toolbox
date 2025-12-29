@@ -113,6 +113,17 @@ class TensorMaterial:
         e3r = rotate_rank3(self.e3, R)
         epsr = rotate_rank2(self.eps, R)
 
+        # Enforce physical symmetries to reduce numerical noise after rotation.
+        C4r = 0.25 * (
+            C4r
+            + C4r.transpose(1, 0, 2, 3)
+            + C4r.transpose(0, 1, 3, 2)
+            + C4r.transpose(1, 0, 3, 2)
+        )
+        C4r = 0.5 * (C4r + C4r.transpose(2, 3, 0, 1))
+        e3r = 0.5 * (e3r + e3r.transpose(0, 2, 1))
+        epsr = 0.5 * (epsr + epsr.T)
+
         new_name = self.name if name_suffix is None else f"{self.name}_{name_suffix}"
         return TensorMaterial(new_name, self.rho, C4r, e3r, epsr)
 
