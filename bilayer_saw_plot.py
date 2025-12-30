@@ -9,7 +9,7 @@ from piezo_stroh.stroh.piezo_saw_bilayer import PiezoSAWBilayerSolver
 def main():
     # --- Materials: AlN film on sapphire substrate ---
     db = MaterialDB()
-    aln_voigt: VoigtMaterial = db.get("linbo3", "bulk_ogi2002")
+    aln_voigt: VoigtMaterial = db.get("AlN", "singlecrystal_sotnikov2010")
     sap_voigt: VoigtMaterial = db.get("sapphire", "singlecrystal_gladden2004")
 
     aln = aln_voigt.to_tensor()

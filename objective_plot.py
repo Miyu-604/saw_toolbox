@@ -4,19 +4,22 @@ import numpy as np
 from piezo_stroh.io import MaterialDB
 from piezo_stroh.material import VoigtMaterial
 from piezo_stroh.stroh.piezo_saw import PiezoSAWSolver
+from piezo_stroh.rotation import R_yxcut_theta_xprop, Rz
 
 
 def main():
     # --- Load sapphire (z-cut, no rotation) from YAML DB ---
     db = MaterialDB()
-    sap_voigt: VoigtMaterial = db.get("aln", "singlecrystal_sotnikov2010")
-    sap = sap_voigt.to_tensor()
+    mat_voigt: VoigtMaterial = db.get("LiNbO3", "bulk_ogi2002")
+    mat = mat_voigt.to_tensor()
+    R = R_yxcut_theta_xprop(127.86)
+    mat_orientation = mat.rotated(R, name_suffix="128YX_xprop")
 
     # --- Stroh solver ---
-    solver = PiezoSAWSolver(sap)
+    solver = PiezoSAWSolver(mat_orientation)
 
     # Sapphire SAW is relatively fast; scan a broad range
-    vmin, vmax = 6000, 8000
+    vmin, vmax = 3000, 5000
 
     v_scan = np.linspace(vmin, vmax, 2001)
     err_short_scan = np.array([solver.objective(v, electric_bc="short") for v in v_scan])
@@ -27,7 +30,7 @@ def main():
     v_short, err_short = float(v_scan[i_short]), float(err_short_scan[i_short])
     v_open, err_open = float(v_scan[i_open]), float(err_open_scan[i_open])
 
-    print(f"[{sap.name}]")
+    print(f"[{mat_orientation.name}]")
     print(f"Scan min (Short): v={v_short:.2f} m/s (err={err_short:.2e})")
     print(f"Scan min (Open):  v={v_open:.2f} m/s (err={err_open:.2e})")
 

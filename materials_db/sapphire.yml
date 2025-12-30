@@ -7,7 +7,7 @@ datasets:
     temp_K: 300
     axes: "crystal axes (trigonal 3m), c-axis = z (z-cut)"
     voigt_order: [xx, yy, zz, yz, xz, xy]
-    shear: tensorial
+    shear: engineering
 
     units:
       C6: GPa
