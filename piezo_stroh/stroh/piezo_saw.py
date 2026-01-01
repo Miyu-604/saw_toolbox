@@ -174,3 +174,91 @@ class PiezoSAWSolver:
             prof /= u0
 
         return z_over_lambda, prof
+
+
+class PiezoAlSAWSolver(PiezoSAWSolver):
+    """
+    SAW solver with Al electrode mass loading modeled as a surface mass sheet.
+    """
+
+    RHO_AL = 2700.0  # Al density [kg/m^3]
+
+    def boundary_matrix_with_al(
+        self,
+        v: float,
+        thickness: float,
+        wavelength: float,
+        *,
+        electric_bc: str = "short",
+    ) -> np.ndarray:
+        """
+        Boundary condition matrix with Al film mass loading.
+        thickness: Al film thickness [m]
+        wavelength: SAW wavelength [m]
+        """
+        m_s = self.RHO_AL * thickness
+        k = 2.0 * np.pi / wavelength
+
+        betas, alphas = self.solve_beta(v)
+        B = np.zeros((4, 4), dtype=complex)
+
+        mass_load_coeff = 1j * m_s * k * (v**2)
+
+        for n in range(4):
+            beta = betas[n]
+            alpha = alphas[:, n]
+
+            for j in range(3):
+                stress_term = 0j
+                for l in range(3):
+                    stress_term += self.C[2, j, l, 0] * alpha[l]
+                    stress_term += self.C[2, j, l, 2] * beta * alpha[l]
+                stress_term += self.e[0, 2, j] * alpha[3]
+                stress_term += self.e[2, 2, j] * beta * alpha[3]
+                B[j, n] = stress_term - mass_load_coeff * alpha[j]
+
+            if electric_bc == "short":
+                B[3, n] = alpha[3]
+            elif electric_bc == "open":
+                D3 = 0j
+                for k_comp in range(3):
+                    D3 += self.e[2, k_comp, 0] * alpha[k_comp]
+                    D3 += self.e[2, k_comp, 2] * beta * alpha[k_comp]
+                D3 -= self.eps[2, 0] * alpha[3]
+                D3 -= self.eps[2, 2] * beta * alpha[3]
+                B[3, n] = D3 + self.eps0 * alpha[3]
+            else:
+                raise ValueError("electric_bc must be 'short' or 'open'.")
+
+        return B
+
+    def find_velocity_al(
+        self,
+        thickness: float,
+        wavelength: float,
+        *,
+        electric_bc: str = "short",
+        v_guess: float = 4000.0,
+        search_range: float = 500.0,
+    ) -> float:
+        """
+        Search SAW velocity with Al mass loading for given thickness.
+        """
+        def obj(v):
+            try:
+                B = self.boundary_matrix_with_al(
+                    v,
+                    thickness,
+                    wavelength,
+                    electric_bc=electric_bc,
+                )
+                return float(linalg.svd(B, compute_uv=False)[-1])
+            except Exception:
+                return 1e30
+
+        res = minimize_scalar(
+            obj,
+            bounds=(v_guess - search_range, v_guess + search_range),
+            method="bounded",
+        )
+        return float(res.x)

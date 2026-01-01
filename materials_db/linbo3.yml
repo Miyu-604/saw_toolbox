@@ -12,7 +12,7 @@ datasets:
       eps: F/m
       rho: kg/m^3
 
-    rho: 4640.0
+    rho: 4636.0
 
     # --- voigt notation ---
     C6:

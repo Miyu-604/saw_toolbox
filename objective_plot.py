@@ -12,7 +12,9 @@ def main():
     db = MaterialDB()
     mat_voigt: VoigtMaterial = db.get("LiNbO3", "bulk_ogi2002")
     mat = mat_voigt.to_tensor()
-    R = R_yxcut_theta_xprop(127.86)
+    R1 = R_yxcut_theta_xprop(127.86)
+    R2 = Rz(40)
+    R = R2 @ R1
     mat_orientation = mat.rotated(R, name_suffix="128YX_xprop")
 
     # --- Stroh solver ---
@@ -47,7 +49,7 @@ def main():
     ax.axvline(v_open, color="C1", linestyle=":", alpha=0.6)
     ax.set_xlabel("Phase velocity (m/s)")
     ax.set_ylabel("min singular value (objective)")
-    ax.set_title("Sapphire z-cut SAW objective sweep")
+    ax.set_title(f"{mat_orientation.name} SAW objective sweep")
     ax.grid(True, linestyle=":", alpha=0.5)
     ax.legend()
     plt.tight_layout()
@@ -78,8 +80,8 @@ def main():
         plt.tight_layout()
         plt.show()
 
-    plot_profile(z, prof_open, f"Sapphire open surface (v={v_open:.2f} m/s)")
-    plot_profile(z, prof_short, f"Sapphire short surface (v={v_short:.2f} m/s)")
+    plot_profile(z, prof_open, f"{mat_orientation.name} open surface (v={v_open:.2f} m/s)")
+    plot_profile(z, prof_short, f"{mat_orientation.name} (v={v_short:.2f} m/s)")
 
 
 if __name__ == "__main__":
