@@ -179,14 +179,82 @@ class PiezoSAWBilayerSolver:
         return B
 
     def objective(self, v: float, *, h_over_lambda: float, electric_bc: str) -> float:
-        try:
-            B = self.boundary_matrix(v, h_over_lambda=h_over_lambda, electric_bc=electric_bc)
-            _, s, _ = linalg.svd(B)
-            return float(s[-1])
-        except np.linalg.LinAlgError:
-            return 1e30
+            try:
+                B = self.boundary_matrix(v, h_over_lambda=h_over_lambda, electric_bc=electric_bc)
+                
+                # --- 12x12行列用のスケーリング ---
+                # 各行に対して適切な重みをかけてオーダーを揃える
+                scaling = np.ones(12)
+                
+                # Row 3: 表面電気境界
+                if electric_bc == "short":
+                    scaling[3] = 1e11
+                else:
+                    scaling[3] = 1e21
+                    
+                # Row 4,5,6,7: 界面での u と phi の連続条件 (オーダー 1 -> 10^11)
+                scaling[4:8] = 1e11
+                
+                # Row 11: 界面での D3 の連続条件 (オーダー 10^-10 -> 10^11)
+                scaling[11] = 1e21
+                
+                # 行列の各行にスケーリング係数を適用
+                # (broadcasting を使って効率的に計算)
+                B_scaled = B * scaling[:, np.newaxis]
+                
+                # 特異値分解
+                _, s, _ = linalg.svd(B_scaled)
+                
+                # 最小特異値を返す
+                return float(s[-1])
+                
+            except np.linalg.LinAlgError:
+                return 1e30
 
     def find_velocity(self, *, h_over_lambda: float, electric_bc: str, vmin: float, vmax: float):
         f = lambda vv: self.objective(vv, h_over_lambda=h_over_lambda, electric_bc=electric_bc)
         res = minimize_scalar(f, bounds=(vmin, vmax), method="bounded")
         return float(res.x), float(res.fun)
+
+    def mode_profile(
+        self,
+        v: float,
+        *,
+        h_over_lambda: float,
+        electric_bc: str = "short",
+        z_over_lambda: np.ndarray | None = None,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """
+        Return depth profiles for [u1,u2,u3,phi] as complex values.
+        z_over_lambda spans film (0..h) and substrate (h..).
+        """
+        if z_over_lambda is None:
+            z_film = np.linspace(0.0, h_over_lambda, 120)
+            z_sub = np.linspace(h_over_lambda, h_over_lambda + 2.5, 180)
+            z_over_lambda = np.concatenate([z_film, z_sub[1:]])
+
+        bet_f, alp_f = self._solve_beta_all(self.film, v)
+        bet_s_all, alp_s_all = self._solve_beta_all(self.sub, v)
+        bet_s, alp_s = self._select_decaying(bet_s_all, alp_s_all)
+
+        B = self.boundary_matrix(v, h_over_lambda=h_over_lambda, electric_bc=electric_bc)
+        _, _, Vh = linalg.svd(B)
+        coeff = Vh[-1]
+        coeff_f = coeff[0:8]
+        coeff_s = coeff[8:12]
+
+        prof = np.zeros((len(z_over_lambda), 4), dtype=complex)
+        for i, z in enumerate(z_over_lambda):
+            if z <= h_over_lambda + 1e-12:
+                for m in range(8):
+                    prof[i, :] += alp_f[:, m] * coeff_f[m] * np.exp(1j * 2 * np.pi * bet_f[m] * z)
+            else:
+                z_shift = z - h_over_lambda
+                for n in range(4):
+                    prof[i, :] += alp_s[:, n] * coeff_s[n] * np.exp(1j * 2 * np.pi * bet_s[n] * z_shift)
+
+        u0 = np.sqrt(np.sum(np.abs(prof[0, :3]) ** 2))
+        if u0 > 0:
+            prof /= u0
+
+        return z_over_lambda, prof

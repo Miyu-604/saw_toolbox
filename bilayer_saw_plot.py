@@ -16,12 +16,19 @@ def main():
     sapphire = sap_voigt.to_tensor()
 
     # --- Geometry: H = 1 um, lambda = 10 um ---
-    h_over_lambda = 1.0 / 10.0
+    h_over_lambda = 0.3
 
     # --- Bilayer SAW solver ---
     solver = PiezoSAWBilayerSolver(aln, sapphire)
 
-    vmin, vmax = 3000, 9000
+    vmin, vmax = 5000, 6000
+    v_short, err_short = solver.find_velocity(
+        h_over_lambda=h_over_lambda, electric_bc="short", vmin=vmin, vmax=vmax
+    )
+    v_open, err_open = solver.find_velocity(
+        h_over_lambda=h_over_lambda, electric_bc="open", vmin=vmin, vmax=vmax
+    )
+
     v_scan = np.linspace(vmin, vmax, 601)
     err_short_scan = np.array(
         [solver.objective(v, h_over_lambda=h_over_lambda, electric_bc="short") for v in v_scan]
@@ -30,15 +37,12 @@ def main():
         [solver.objective(v, h_over_lambda=h_over_lambda, electric_bc="open") for v in v_scan]
     )
 
-    i_short = int(np.argmin(err_short_scan))
-    i_open = int(np.argmin(err_open_scan))
-    v_short, err_short = float(v_scan[i_short]), float(err_short_scan[i_short])
-    v_open, err_open = float(v_scan[i_open]), float(err_open_scan[i_open])
-
     print("[AlN(1um) / Sapphire(half-space)]")
     print(f"h_over_lambda = {h_over_lambda:.3f}")
     print(f"Scan min (Short): v={v_short:.2f} m/s (err={err_short:.2e})")
     print(f"Scan min (Open):  v={v_open:.2f} m/s (err={err_open:.2e})")
+    k2 = 2.0 * (v_open - v_short) / v_open
+    print(f"K^2 (2*(v_open - v_short)/v_open): {k2 * 100:.3f}%")
 
     # --- Simple objective sweep plot ---
     try:
@@ -58,6 +62,35 @@ def main():
     ax.legend()
     plt.tight_layout()
     plt.show()
+
+    # --- Mode profile plotting (optional) ---
+    z, prof_open = solver.mode_profile(v_open, h_over_lambda=h_over_lambda, electric_bc="open")
+    z, prof_short = solver.mode_profile(v_short, h_over_lambda=h_over_lambda, electric_bc="short")
+
+    def plot_profile(z, prof, title):
+        u1, u2, u3, phi = prof[:, 0], prof[:, 1], prof[:, 2], prof[:, 3]
+        fig, ax1 = plt.subplots(figsize=(8, 6))
+        ax1.plot(z, np.abs(u1), label="|u_x|")
+        ax1.plot(z, np.abs(u2), label="|u_y|")
+        ax1.plot(z, np.abs(u3), label="|u_z|")
+        ax1.axvline(h_over_lambda, color="k", linestyle=":", alpha=0.4)
+        ax1.set_xlabel("Depth (z/λ)")
+        ax1.set_ylabel("Normalized displacement")
+        ax1.grid(True, linestyle=":", alpha=0.6)
+
+        ax2 = ax1.twinx()
+        ax2.plot(z, np.abs(phi), label="|phi|", linewidth=2)
+        ax2.set_ylabel("Potential (arb.)")
+
+        lines1, labels1 = ax1.get_legend_handles_labels()
+        lines2, labels2 = ax2.get_legend_handles_labels()
+        ax1.legend(lines1 + lines2, labels1 + labels2, loc="upper right")
+        ax1.set_title(title)
+        plt.tight_layout()
+        plt.show()
+
+    plot_profile(z, prof_open, f"AlN/Sapphire open surface (v={v_open:.2f} m/s)")
+    plot_profile(z, prof_short, f"AlN/Sapphire shorted surface (v={v_short:.2f} m/s)")
 
 
 if __name__ == "__main__":

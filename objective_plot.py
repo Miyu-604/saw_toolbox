@@ -13,7 +13,7 @@ def main():
     mat_voigt: VoigtMaterial = db.get("LiNbO3", "bulk_ogi2002")
     mat = mat_voigt.to_tensor()
     R1 = R_yxcut_theta_xprop(127.86)
-    R2 = Rz(40)
+    R2 = Rz(10)
     R = R2 @ R1
     mat_orientation = mat.rotated(R, name_suffix="128YX_xprop")
 
@@ -21,7 +21,7 @@ def main():
     solver = PiezoSAWSolver(mat_orientation)
 
     # Sapphire SAW is relatively fast; scan a broad range
-    vmin, vmax = 3000, 5000
+    vmin, vmax = 3000, 4000
 
     v_scan = np.linspace(vmin, vmax, 2001)
     err_short_scan = np.array([solver.objective(v, electric_bc="short") for v in v_scan])
@@ -81,7 +81,7 @@ def main():
         plt.show()
 
     plot_profile(z, prof_open, f"{mat_orientation.name} open surface (v={v_open:.2f} m/s)")
-    plot_profile(z, prof_short, f"{mat_orientation.name} (v={v_short:.2f} m/s)")
+    plot_profile(z, prof_short, f"{mat_orientation.name} short surface (v={v_short:.2f} m/s)")
 
 
 if __name__ == "__main__":

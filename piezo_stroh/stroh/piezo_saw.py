@@ -127,15 +127,24 @@ class PiezoSAWSolver:
         return B
 
     def objective(self, v: float, *, electric_bc: str = "short") -> float:
-        """
-        Minimize smallest singular value of boundary matrix.
-        """
-        try:
-            B = self.boundary_matrix(v, electric_bc=electric_bc)
-            _, s, _ = linalg.svd(B)
-            return float(s[-1])
-        except np.linalg.LinAlgError:
-            return 1e30
+            try:
+                B = self.boundary_matrix(v, electric_bc=electric_bc)
+                
+                # --- スケーリング処理を追加 ---
+                # 応力の行 (0,1,2) は ~10^11 なので、
+                # 電気の行 (3) を 10^11 倍程度にしてバランスを取る
+                B_scaled = np.copy(B)
+                if electric_bc == "short":
+                    # phi (V) を 1e11 倍して応力 (Pa) に合わせる
+                    B_scaled[3, :] *= 1e11 
+                elif electric_bc == "open":
+                    # D3 (C/m^2) は非常に小さい (~10^-10) ので、1e21 倍程度必要
+                    B_scaled[3, :] *= 1e21
+                    
+                _, s, _ = linalg.svd(B_scaled)
+                return float(s[-1])
+            except np.linalg.LinAlgError:
+                return 1e30
 
     def find_velocity(self, *, electric_bc: str, vmin: float, vmax: float) -> tuple[float, float]:
         func = lambda vv: self.objective(vv, electric_bc=electric_bc)
