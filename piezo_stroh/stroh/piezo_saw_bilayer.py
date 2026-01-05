@@ -239,6 +239,19 @@ class PiezoSAWBilayerSolver:
 
         B = self.boundary_matrix(v, h_over_lambda=h_over_lambda, electric_bc=electric_bc)
         _, _, Vh = linalg.svd(B)
+
+    # 2. 【ここを追加】 objective と全く同じスケーリングを適用
+        scaling = np.ones(12)
+        if electric_bc == "short":
+            scaling[3] = 1e11
+        else:
+            scaling[3] = 1e21
+        scaling[4:8] = 1e11
+        scaling[11] = 1e21
+        B_scaled = B * scaling[:, np.newaxis]
+        
+        # 3. スケーリング済み行列で SVD を行い、最小特異値に対応するベクトル（解）を得る
+        _, _, Vh = linalg.svd(B_scaled)
         coeff = Vh[-1]
         coeff_f = coeff[0:8]
         coeff_s = coeff[8:12]

@@ -3,48 +3,34 @@ import numpy as np
 
 from piezo_stroh.io import MaterialDB
 from piezo_stroh.material import VoigtMaterial
-from piezo_stroh.stroh.piezo_saw_bilayer import PiezoSAWBilayerSolver
+from piezo_stroh.stroh.piezo_saw import PiezoSAWSolver
 
 
 def main():
-    # --- Materials: AlN film on sapphire substrate ---
+    # --- Load sapphire (z-cut, no rotation) from YAML DB ---
     db = MaterialDB()
-    aln_voigt: VoigtMaterial = db.get("AlN", "singlecrystal_sotnikov2010")
     sap_voigt: VoigtMaterial = db.get("sapphire", "singlecrystal_gladden2004")
+    sap = sap_voigt.to_tensor()
 
-    aln = aln_voigt.to_tensor()
-    sapphire = sap_voigt.to_tensor()
+    # --- Elastic SAW solver ---
+    solver = PiezoSAWSolver(sap)
 
-    # --- Geometry: H = 1 um, lambda = 10 um ---
-    h_over_lambda = 0.2
-
-    # --- Bilayer SAW solver ---
-    solver = PiezoSAWBilayerSolver(aln, sapphire)
-
-    vmin, vmax = 5000, 6000
-    v_short, err_short = solver.find_velocity(
-        h_over_lambda=h_over_lambda, electric_bc="short", vmin=vmin, vmax=vmax
-    )
-    v_open, err_open = solver.find_velocity(
-        h_over_lambda=h_over_lambda, electric_bc="open", vmin=vmin, vmax=vmax
-    )
+    vmin, vmax = 4000, 6000
 
     v_scan = np.linspace(vmin, vmax, 601)
-    err_short_scan = np.array(
-        [solver.objective(v, h_over_lambda=h_over_lambda, electric_bc="short") for v in v_scan]
-    )
-    err_open_scan = np.array(
-        [solver.objective(v, h_over_lambda=h_over_lambda, electric_bc="open") for v in v_scan]
-    )
+    err_short_scan = np.array([solver.objective(v, electric_bc="short") for v in v_scan])
+    err_open_scan = np.array([solver.objective(v, electric_bc="open") for v in v_scan])
 
-    print("[AlN(1um) / Sapphire(half-space)]")
-    print(f"h_over_lambda = {h_over_lambda:.3f}")
+    i_short = int(np.argmin(err_short_scan))
+    i_open = int(np.argmin(err_open_scan))
+    v_short, err_short = float(v_scan[i_short]), float(err_short_scan[i_short])
+    v_open, err_open = float(v_scan[i_open]), float(err_open_scan[i_open])
+
+    print(f"[{sap.name}]")
     print(f"Scan min (Short): v={v_short:.2f} m/s (err={err_short:.2e})")
     print(f"Scan min (Open):  v={v_open:.2f} m/s (err={err_open:.2e})")
-    k2 = 2.0 * (v_open - v_short) / v_open
-    print(f"K^2 (2*(v_open - v_short)/v_open): {k2 * 100:.3f}%")
 
-    # --- Simple objective sweep plot ---
+    # --- Simple error sweep plot (optional) ---
     try:
         import matplotlib.pyplot as plt
     except Exception:
@@ -57,15 +43,15 @@ def main():
     ax.axvline(v_open, color="C1", linestyle=":", alpha=0.6)
     ax.set_xlabel("Phase velocity (m/s)")
     ax.set_ylabel("min singular value (objective)")
-    ax.set_title("Bilayer SAW objective sweep (AlN/Sapphire)")
+    ax.set_title("Sapphire z-cut elastic SAW objective sweep")
     ax.grid(True, linestyle=":", alpha=0.5)
     ax.legend()
     plt.tight_layout()
     plt.show()
 
     # --- Mode profile plotting (optional) ---
-    z, prof_open = solver.mode_profile(v_open, h_over_lambda=h_over_lambda, electric_bc="open")
-    z, prof_short = solver.mode_profile(v_short, h_over_lambda=h_over_lambda, electric_bc="short")
+    z, prof_open = solver.mode_profile(v_open, electric_bc="open")
+    z, prof_short = solver.mode_profile(v_short, electric_bc="short")
 
     def plot_profile(z, prof, title):
         u1, u2, u3, phi = prof[:, 0], prof[:, 1], prof[:, 2], prof[:, 3]
@@ -73,7 +59,6 @@ def main():
         ax1.plot(z, np.abs(u1), label="|u_x|")
         ax1.plot(z, np.abs(u2), label="|u_y|")
         ax1.plot(z, np.abs(u3), label="|u_z|")
-        ax1.axvline(h_over_lambda, color="k", linestyle=":", alpha=0.4)
         ax1.set_xlabel("Depth (z/λ)")
         ax1.set_ylabel("Normalized displacement")
         ax1.grid(True, linestyle=":", alpha=0.6)
@@ -89,8 +74,8 @@ def main():
         plt.tight_layout()
         plt.show()
 
-    plot_profile(z, prof_open, f"AlN/Sapphire open surface (v={v_open:.2f} m/s)")
-    plot_profile(z, prof_short, f"AlN/Sapphire shorted surface (v={v_short:.2f} m/s)")
+    plot_profile(z, prof_open, f"{sap.name} open surface (v={v_open:.2f} m/s)")
+    plot_profile(z, prof_short, f"{sap.name} shorted surface (v={v_short:.2f} m/s)")
 
 
 if __name__ == "__main__":

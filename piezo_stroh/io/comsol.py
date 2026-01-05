@@ -23,12 +23,9 @@ def _value_list(
     unit: str | None,
     fmtstr: str,
 ) -> str:
-    """Build {v11[unit], v21[unit], ...} matching _var_list order."""
+    """Build {v11, v21, ...} matching _var_list order."""
     vals = _flatten_col_major(A)
-    if unit is None or unit == "":
-        items = [fmtstr.format(x) for x in vals]
-    else:
-        items = [f"{fmtstr.format(x)}[{unit}]" for x in vals]
+    items = [fmtstr.format(x) for x in vals]
     return "{" + ", ".join(items) + "}"
 
 
@@ -77,9 +74,13 @@ def to_comsol_text(
         (11,21,31,...,m1, 12,22,32,...)
 
     Defaults:
-      - C6 is exported in Pa with `[Pa]` units.
-      - e36 is exported with prefix `eES` in C/m^2 with `[C/m^2]` units.
-      - eps is exported as relative permittivity (dimensionless) with no unit suffix.
+      - C6 is exported in Pa (mat.C6 is Pa).
+      - e36 is exported with prefix `eES` in C/m^2 (mat.e36 is C/m^2).
+      - eps is exported as relative permittivity (dimensionless) by default.
+
+    Output formatting:
+      - Values are numeric only; unit parameters are retained for scaling/reference
+        but are not printed.
 
     Scaling:
       - You can change units by scaling values yourself, e.g. export GPa via

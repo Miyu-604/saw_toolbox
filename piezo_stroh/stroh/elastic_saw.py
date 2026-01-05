@@ -100,3 +100,35 @@ class ElasticSAWSolver:
         func = lambda vv: self.objective(vv)
         res = minimize_scalar(func, bounds=(vmin, vmax), method="bounded")
         return float(res.x), float(res.fun)
+
+    def mode_profile(
+        self,
+        v: float,
+        *,
+        z_over_lambda: np.ndarray | None = None,
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """
+        Return depth profiles for [u1,u2,u3] as complex values.
+        z_over_lambda is dimensionless depth (0..N), where exp(i 2pi beta z_over_lambda).
+        """
+        if z_over_lambda is None:
+            z_over_lambda = np.linspace(0, 2.5, 200)
+
+        betas, alphas = self.solve_beta(v)
+        B = self.boundary_matrix(v)
+
+        # null vector via SVD
+        _, _, Vh = linalg.svd(B)
+        coeff = Vh[-1]  # (3,)
+
+        prof = np.zeros((len(z_over_lambda), 3), dtype=complex)
+        for i, z in enumerate(z_over_lambda):
+            for n in range(3):
+                prof[i, :] += alphas[:, n] * coeff[n] * np.exp(1j * 2 * np.pi * betas[n] * z)
+
+        # normalize by surface displacement magnitude
+        u0 = np.sqrt(np.sum(np.abs(prof[0, :]) ** 2))
+        if u0 > 0:
+            prof /= u0
+
+        return z_over_lambda, prof

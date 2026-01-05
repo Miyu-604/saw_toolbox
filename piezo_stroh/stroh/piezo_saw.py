@@ -190,32 +190,53 @@ class PiezoAlSAWSolver(PiezoSAWSolver):
     SAW solver with Al electrode mass loading modeled as a surface mass sheet.
     """
 
-    RHO_AL = 2700.0  # Al density [kg/m^3]
+    RHO_AL = 2700.0          # [kg/m^3]
+    E_AL   = 70.0e9          # Young's modulus [Pa]
+    NU_AL  = 0.33            # Poisson's ratio
+
+    def __init__(self, mat, **kwargs):
+        super().__init__(mat, **kwargs)
+        # Lame定数の計算
+        self.mu_al = self.E_AL / (2 * (1 + self.NU_AL))
+        self.lam_al = (self.E_AL * self.NU_AL) / ((1 + self.NU_AL) * (1 - 2 * self.NU_AL))
+        
+        # Tierstenの有効剛性係数 (Plate stiffness for x1 propagation)
+        self.gamma_al = (4 * self.mu_al * (self.lam_al + self.mu_al)) / (self.lam_al + 2 * self.mu_al)
 
     def boundary_matrix_with_al(
-        self,
-        v: float,
-        thickness: float,
-        wavelength: float,
-        *,
-        electric_bc: str = "short",
+        self, 
+        v: float, 
+        thickness: float, 
+        wavelength: float, 
+        electric_bc: str = "short"
     ) -> np.ndarray:
-        """
-        Boundary condition matrix with Al film mass loading.
-        thickness: Al film thickness [m]
-        wavelength: SAW wavelength [m]
-        """
         m_s = self.RHO_AL * thickness
         k = 2.0 * np.pi / wavelength
-
+        
         betas, alphas = self.solve_beta(v)
         B = np.zeros((4, 4), dtype=complex)
 
-        mass_load_coeff = 1j * m_s * k * (v**2)
-
+        # 1j/k で規格化した境界条件式における係数
+        # 質量項係数: i * m_s * v^2
+        # 剛性項係数: -i * (剛性係数 * thickness) 
+        # (Tiersten式を整理すると、剛性は質量と逆符号で現れる)
+        
         for n in range(4):
             beta = betas[n]
             alpha = alphas[:, n]
+
+            # --- 機械的境界条件 (T3j/ik = Film_Force/ik) ---
+            
+            # x1方向 (伝搬方向): 質量負荷 vs 面内剛性(gamma)
+            force_1 = 1j * k * (m_s * v**2 - thickness * self.gamma_al) * alpha[0]
+            
+            # x2方向 (横方向): 質量負荷 vs 面内剛性(mu)
+            force_2 = 1j * k * (m_s * v**2 - thickness * self.mu_al) * alpha[1]
+            
+            # x3方向 (面外方向): 質量負荷のみ (薄膜近似)
+            force_3 = 1j * k * (m_s * v**2) * alpha[2]
+
+            forces = [force_1, force_2, force_3]
 
             for j in range(3):
                 stress_term = 0j
@@ -224,11 +245,14 @@ class PiezoAlSAWSolver(PiezoSAWSolver):
                     stress_term += self.C[2, j, l, 2] * beta * alpha[l]
                 stress_term += self.e[0, 2, j] * alpha[3]
                 stress_term += self.e[2, 2, j] * beta * alpha[3]
-                B[j, n] = stress_term - mass_load_coeff * alpha[j]
+                
+                # 基板の応力 = 膜からの力
+                B[j, n] = stress_term - forces[j]
 
+            # 電気的境界条件 (変更なし)
             if electric_bc == "short":
                 B[3, n] = alpha[3]
-            elif electric_bc == "open":
+            else:
                 D3 = 0j
                 for k_comp in range(3):
                     D3 += self.e[2, k_comp, 0] * alpha[k_comp]
@@ -236,8 +260,6 @@ class PiezoAlSAWSolver(PiezoSAWSolver):
                 D3 -= self.eps[2, 0] * alpha[3]
                 D3 -= self.eps[2, 2] * beta * alpha[3]
                 B[3, n] = D3 + self.eps0 * alpha[3]
-            else:
-                raise ValueError("electric_bc must be 'short' or 'open'.")
 
         return B
 

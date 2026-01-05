@@ -8,8 +8,8 @@ from piezo_stroh.rotation import Rz
 # Example expected files:
 #   materials_db/linbo3.yml
 # with a dataset name such as `bulk_ogi2002`.
-MATERIAL_KEY = "AlN"
-DATASET_KEY = "singlecrystal_sotnikov2010"  # set to None to use YAML default_dataset if your DB supports it
+MATERIAL_KEY = "Sapphire"
+DATASET_KEY = "singlecrystal_gladden2004"  # set to None to use YAML default_dataset if your DB supports it
 
 
 def main():

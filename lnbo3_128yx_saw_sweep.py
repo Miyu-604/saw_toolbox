@@ -25,6 +25,24 @@ def main():
     err_short = []
     err_open = []
 
+    comsol_angles = None
+    comsol_open = None
+    comsol_short = None
+    comsol_k2_pct = None
+    try:
+        comsol = np.genfromtxt(
+            "comsol_data/ln_rotation.csv",
+            delimiter=",",
+            skip_header=1,
+        )
+        if comsol.ndim == 2 and comsol.shape[1] >= 4:
+            comsol_angles = comsol[:, 0]
+            comsol_open = comsol[:, 1] * 10.0
+            comsol_short = comsol[:, 2] * 10.0
+            comsol_k2_pct = comsol[:, 3] * 100.0
+    except OSError:
+        pass
+
     for ang in angles_deg:
         R_inplane = Rz(ang)
         R = R_inplane @ R_cut
@@ -66,11 +84,35 @@ def main():
     fig, (ax1, ax2, ax3) = plt.subplots(figsize=(8, 9), nrows=3, sharex=True)
     ax1.scatter(angles_deg, v_short, label="Short")
     ax1.scatter(angles_deg, v_open, label="Open")
+    if comsol_angles is not None:
+        ax1.scatter(
+            comsol_angles,
+            comsol_short,
+            label="Short (COMSOL)",
+            facecolors="none",
+            edgecolors="tab:blue",
+        )
+        ax1.scatter(
+            comsol_angles,
+            comsol_open,
+            label="Open (COMSOL)",
+            facecolors="none",
+            edgecolors="tab:orange",
+        )
     ax1.set_ylabel("SAW velocity (m/s)")
     ax1.grid(True, linestyle=":", alpha=0.6)
     ax1.legend(loc="upper left")
 
     ax2.scatter(angles_deg, k2 * 100.0, color="tab:red", label="K^2")
+    if comsol_angles is not None:
+        ax2.scatter(
+            comsol_angles,
+            comsol_k2_pct,
+            color="tab:red",
+            label="K^2 (COMSOL)",
+            facecolors="none",
+            edgecolors="tab:red",
+        )
     ax2.set_xlabel("Rz angle (deg)")
     ax2.set_ylabel("K^2 (%)")
     ax2.set_ylim(0, 6)

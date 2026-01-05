@@ -28,6 +28,16 @@ def rotate_rank4(T4: np.ndarray, R: np.ndarray) -> np.ndarray:
 
 
 # ---- common orientation helpers ----
+def R_I() -> np.ndarray:
+    """
+    Identity rotation
+    """
+    R = np.array([[1, 0, 0],
+                  [0, 1, 0],
+                  [0, 0, 1]], dtype=float)
+    assert_rotation_matrix(R)
+    return R
+
 def R_ycut() -> np.ndarray:
     """
     Y-cut, Z propagation (example mapping used earlier):
