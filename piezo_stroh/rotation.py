@@ -49,6 +49,17 @@ def R_ycut() -> np.ndarray:
     assert_rotation_matrix(R)
     return R
 
+def R_y2z() -> np.ndarray:
+    """
+    Map crystal Y axis to new Z while keeping X as propagation axis:
+      new_x = old_x, new_y = -old_z, new_z = old_y
+    """
+    R = np.array([[1.0, 0.0,  0.0],
+                  [0.0, 0.0, -1.0],
+                  [0.0, 1.0,  0.0]], dtype=float)
+    assert_rotation_matrix(R)
+    return R
+
 
 def R_128yxcut_xprop() -> np.ndarray:
     """

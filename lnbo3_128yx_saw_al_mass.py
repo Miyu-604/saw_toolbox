@@ -22,18 +22,24 @@ def main():
 
     solver = PiezoAlSAWSolver(ln128)
 
-    t_over_lambda = np.logspace(-3, -1, 21)
+    t_over_lambda = np.concatenate(([0.0], np.logspace(-4, -1, 61)))
     velocities = []
     errors = []
 
-    for ratio in t_over_lambda:
+    for i, ratio in enumerate(t_over_lambda):
         thickness = ratio * wavelength
+        if i == 0:
+            v_guess = 4000.0
+            search_range = 500.0
+        else:
+            v_guess = velocities[-1]
+            search_range = 100.0
         v_short = solver.find_velocity_al(
             thickness,
             wavelength,
             electric_bc="short",
-            v_guess=4000.0,
-            search_range=500.0,
+            v_guess=v_guess,
+            search_range=search_range,
         )
         velocities.append(v_short)
         B = solver.boundary_matrix_with_al(
@@ -48,22 +54,47 @@ def main():
     print(f"t/lambda sweep: {t_over_lambda[0]:.4g} to {t_over_lambda[-1]:.4g}")
     print(f"wavelength = {wavelength:.3e} m")
 
+    comsol_t = None
+    comsol_v = None
+    try:
+        comsol = np.genfromtxt(
+            "comsol_data/ln_al_mass.csv",
+            delimiter=",",
+            skip_header=1,
+        )
+        if comsol.ndim == 2 and comsol.shape[1] >= 2:
+            comsol_t = comsol[:, 0]
+            comsol_v = comsol[:, 1]
+    except OSError:
+        pass
+
     try:
         import matplotlib.pyplot as plt
     except Exception:
         return
 
+    plt.rcParams["font.family"] = "Meiryo"
     plt.figure(figsize=(7, 5))
-    plt.scatter(t_over_lambda, velocities, s=30)
+    plt.plot(t_over_lambda, velocities, label="Stroh")
+    if comsol_t is not None:
+        plt.scatter(
+            comsol_t,
+            comsol_v,
+            label="FEM",
+            facecolors="none",
+            edgecolors="tab:orange",
+            s=20,
+        )
     plt.xlabel("t/λ")
     plt.ylabel("SAW velocity (m/s)")
     plt.title("LiNbO3 128YX with Al mass loading (short)")
     plt.grid(True, linestyle=":", alpha=0.6)
+    plt.legend(loc="upper center")
     plt.tight_layout()
     plt.show()
 
     plt.figure(figsize=(7, 5))
-    plt.scatter(t_over_lambda, errors, s=30)
+    plt.scatter(t_over_lambda, errors, s=20)
     plt.xlabel("t/λ")
     plt.ylabel("min singular value (err)")
     plt.title("Boundary condition error (short)")

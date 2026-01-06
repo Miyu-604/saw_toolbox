@@ -40,6 +40,14 @@ def main():
             comsol_open = comsol[:, 1] * 10.0
             comsol_short = comsol[:, 2] * 10.0
             comsol_k2_pct = comsol[:, 3] * 100.0
+
+            # mirror around 90 deg to fill 90..180
+            mask_lt90 = comsol_angles < 90.0
+            angles_mirror = 180.0 - comsol_angles[mask_lt90]
+            comsol_angles = np.concatenate([comsol_angles, angles_mirror])
+            comsol_open = np.concatenate([comsol_open, comsol_open[mask_lt90]])
+            comsol_short = np.concatenate([comsol_short, comsol_short[mask_lt90]])
+            comsol_k2_pct = np.concatenate([comsol_k2_pct, comsol_k2_pct[mask_lt90]])
     except OSError:
         pass
 
@@ -79,54 +87,89 @@ def main():
     err_short = np.asarray(err_short)
     err_open = np.asarray(err_open)
 
+    def rel_span_pct(values: np.ndarray, ref_value: float) -> float:
+        span = float(np.max(values) - np.min(values))
+        if ref_value == 0.0:
+            return float("nan")
+        return 100.0 * span / ref_value
+
+    stroh_ref_short = float(v_short[0])
+    stroh_ref_open = float(v_open[0])
+    print(
+        f"Stroh short span: {rel_span_pct(v_short, stroh_ref_short):.3f}% "
+        f"(min={np.min(v_short):.2f}, max={np.max(v_short):.2f}, ref v0={stroh_ref_short:.2f})"
+    )
+    print(
+        f"Stroh open  span: {rel_span_pct(v_open, stroh_ref_open):.3f}% "
+        f"(min={np.min(v_open):.2f}, max={np.max(v_open):.2f}, ref v0={stroh_ref_open:.2f})"
+    )
+
+    if comsol_angles is not None:
+        idx0 = np.where(np.isclose(comsol_angles, 0.0))[0]
+        if idx0.size > 0:
+            comsol_ref_short = float(comsol_short[idx0[0]])
+            comsol_ref_open = float(comsol_open[idx0[0]])
+            print(
+                f"FEM short span: {rel_span_pct(comsol_short, comsol_ref_short):.3f}% "
+                f"(min={np.min(comsol_short):.2f}, max={np.max(comsol_short):.2f}, ref v0={comsol_ref_short:.2f})"
+            )
+            print(
+                f"FEM open  span: {rel_span_pct(comsol_open, comsol_ref_open):.3f}% "
+                f"(min={np.min(comsol_open):.2f}, max={np.max(comsol_open):.2f}, ref v0={comsol_ref_open:.2f})"
+            )
+
     # --- Plot results ---
+    plt.rcParams["font.family"] = "Meiryo"
     plt.rcParams["lines.markersize"] = 2
-    fig, (ax1, ax2, ax3) = plt.subplots(figsize=(8, 9), nrows=3, sharex=True)
-    ax1.scatter(angles_deg, v_short, label="Short")
-    ax1.scatter(angles_deg, v_open, label="Open")
+    fig, (ax1, ax2) = plt.subplots(figsize=(8, 6.5), nrows=2, sharex=True)
+    ax1.plot(angles_deg, v_short, label="Stroh - 短絡条件")
+    ax1.plot(angles_deg, v_open, label="Stroh - 開放条件")
     if comsol_angles is not None:
         ax1.scatter(
             comsol_angles,
             comsol_short,
-            label="Short (COMSOL)",
+            label="FEM - 短絡条件",
             facecolors="none",
             edgecolors="tab:blue",
         )
         ax1.scatter(
             comsol_angles,
             comsol_open,
-            label="Open (COMSOL)",
+            label="FEM - 開放条件",
             facecolors="none",
             edgecolors="tab:orange",
         )
     ax1.set_ylabel("SAW velocity (m/s)")
     ax1.grid(True, linestyle=":", alpha=0.6)
-    ax1.legend(loc="upper left")
+    ax1.legend(loc="upper center")
 
-    ax2.scatter(angles_deg, k2 * 100.0, color="tab:red", label="K^2")
+    ax2.plot(angles_deg, k2 * 100.0, color="tab:red", label="Stroh - $K^2$")
     if comsol_angles is not None:
         ax2.scatter(
             comsol_angles,
             comsol_k2_pct,
             color="tab:red",
-            label="K^2 (COMSOL)",
+            label="FEM - $K^2$",
             facecolors="none",
             edgecolors="tab:red",
         )
-    ax2.set_xlabel("Rz angle (deg)")
-    ax2.set_ylabel("K^2 (%)")
+    ax2.set_xlabel("Angle (deg)")
+    ax2.set_ylabel("$K^2$ (%)")
     ax2.set_ylim(0, 6)
     ax2.grid(True, linestyle=":", alpha=0.6)
-    ax2.legend(loc="upper left")
+    ax2.legend(loc="upper center")
 
-    ax3.scatter(angles_deg, err_short, label="Short err")
-    ax3.scatter(angles_deg, err_open, label="Open err")
-    ax3.set_xlabel("Rz angle (deg)")
-    ax3.set_ylabel("Solver err")
-    ax3.set_yscale("log")
-    ax3.grid(True, linestyle=":", alpha=0.6)
-    ax3.legend(loc="upper left")
+    plt.tight_layout()
+    plt.show()
 
+    fig_err, ax_err = plt.subplots(figsize=(8, 3.8))
+    ax_err.plot(angles_deg, err_short, label="Short err")
+    ax_err.plot(angles_deg, err_open, label="Open err")
+    ax_err.set_xlabel("Angle (deg)")
+    ax_err.set_ylabel("Solver err")
+    ax_err.set_yscale("log")
+    ax_err.grid(True, linestyle=":", alpha=0.6)
+    ax_err.legend(loc="upper center")
     plt.tight_layout()
     plt.show()
 
