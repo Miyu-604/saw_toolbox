@@ -76,6 +76,11 @@ def main():
     plt.rcParams["font.family"] = "Meiryo"
     plt.figure(figsize=(7, 5))
     plt.plot(t_over_lambda, velocities, label="Stroh")
+    t_fit_max = 0.01
+    mask_stroh = t_over_lambda <= t_fit_max
+    stroh_fit = np.polyfit(t_over_lambda[mask_stroh], np.array(velocities)[mask_stroh], deg=1)
+    x_fit = np.linspace(t_over_lambda.min(), t_fit_max, 200)
+    plt.plot(x_fit, np.polyval(stroh_fit, x_fit), label="Stroh - 1次近似 (t/λ<=0.01)")
     if comsol_t is not None:
         plt.scatter(
             comsol_t,
@@ -85,6 +90,9 @@ def main():
             edgecolors="tab:orange",
             s=20,
         )
+        mask_fem = comsol_t <= t_fit_max
+        fem_fit = np.polyfit(comsol_t[mask_fem], comsol_v[mask_fem], deg=1)
+        plt.plot(x_fit, np.polyval(fem_fit, x_fit), label="FEM - 1次近似 (t/λ<=0.01)")
     plt.xlabel("t/λ")
     plt.ylabel("SAW velocity (m/s)")
     plt.title("LiNbO3 128YX with Al mass loading (short)")

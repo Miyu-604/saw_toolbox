@@ -6,8 +6,8 @@ from piezo_stroh.io.comsol import to_comsol_text
 
 
 # --- DB keys (edit these to match your YAML) ---
-MATERIAL_KEY = "Sapphire"
-DATASET_KEY = "singlecrystal_gladden2004"  # set to None to use YAML default_dataset if your DB supports it
+MATERIAL_KEY = "AlN"
+DATASET_KEY = "singlecrystal_sotnikov2010"  # set to None to use YAML default_dataset if your DB supports it
 
 
 def main():
